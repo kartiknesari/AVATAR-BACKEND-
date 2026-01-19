@@ -228,17 +228,16 @@ async def entrypoint(ctx: JobContext):
         # 6. Present slides automatically
         logger.info("🎬 Starting presentation sequence.")
 
-        for idx, slide in enumerate(slides, start=1):
-            slide_no = slide.get("slide_number", idx)
+        while current_slide_index < total_slides:
+            slide = slides_data[current_slide_index]
+            slide_no = slide.get("slide_number", current_slide_index + 1)
             image_url = slide.get("image_url", "")
             content_text = slide.get("extracted_text", "")
 
             if not image_url:
                 logger.warning(f"⚠️ Slide {slide_no} has no image. Skipping.")
+                current_slide_index += 1
                 continue
-
-            # Update global state
-            current_slide_index = idx - 1
 
             try:
                 # Set attributes for frontend
@@ -252,6 +251,7 @@ async def entrypoint(ctx: JobContext):
                 logger.info(f"📊 Displaying Slide {slide_no}/{total_slides}")
             except Exception as e:
                 logger.error(f"❌ Failed to set slide attributes: {e}")
+                current_slide_index += 1
                 continue
 
             try:
@@ -264,22 +264,34 @@ async def entrypoint(ctx: JobContext):
                 speech_handle = session.generate_reply(instructions=slide_instruction)
                 await speech_handle.wait_for_playout()
 
+                # Check if the presentation was interrupted by the user (e.g., "Stop", "Explain more")
+                if speech_handle.interrupted:
+                    logger.info(
+                        f"⚠️ Slide {slide_no} presentation interrupted. Stopping auto-advance."
+                    )
+                    break
+
                 logger.info(f"✅ Completed slide {slide_no}.")
                 await asyncio.sleep(2.0)
 
+                # Advance to next slide
+                current_slide_index += 1
+
             except Exception as e:
                 logger.error(f"❌ Error presenting slide {slide_no}: {e}")
+                current_slide_index += 1
                 continue
 
         # 7. Final message
-        try:
-            logger.info("🎉 All slides presented.")
-            final_speech = session.generate_reply(
-                instructions="Thank you for your attention! I'd be happy to answer questions or navigate to any slide you'd like to review."
-            )
-            await final_speech.wait_for_playout()
-        except Exception as e:
-            logger.error(f"❌ Error in final message: {e}")
+        if current_slide_index >= total_slides:
+            try:
+                logger.info("🎉 All slides presented.")
+                final_speech = session.generate_reply(
+                    instructions="Thank you for your attention! I'd be happy to answer questions or navigate to any slide you'd like to review."
+                )
+                await final_speech.wait_for_playout()
+            except Exception as e:
+                logger.error(f"❌ Error in final message: {e}")
 
         logger.info("✅ Presentation complete. Entering interactive Q&A mode.")
         await keep_alive(ctx)
