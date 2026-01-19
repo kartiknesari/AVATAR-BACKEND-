@@ -1,7 +1,8 @@
 # app/llm/gemini.py
 from livekit.plugins import google
-from app.config import GEMINI_API_KEY
-from app.avatar.persona import SYSTEM_INSTRUCTIONS
+from config import GEMINI_API_KEY
+from avatar.persona import SYSTEM_INSTRUCTIONS
+
 
 def create_llm():
     """
@@ -9,7 +10,7 @@ def create_llm():
     """
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is missing. Check your .env file.")
-    
+
     # FIXED: Use the correct import path - google.realtime.RealtimeModel
     return google.realtime.RealtimeModel(
         model="gemini-2.5-flash-native-audio-preview-09-2025",
