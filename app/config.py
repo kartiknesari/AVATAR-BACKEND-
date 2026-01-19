@@ -5,21 +5,26 @@ from dotenv import load_dotenv
 # Explicitly load the .env file for local development environment
 load_dotenv()
 
+
 @dataclass(frozen=True)
 class Config:
     """
     Centralized configuration class with strict validation.
     Ensures all necessary API keys are present before the app runs.
     """
+
     # LiveKit Settings
     LIVEKIT_URL: str = os.getenv("LIVEKIT_URL", "")
     LIVEKIT_API_KEY: str = os.getenv("LIVEKIT_API_KEY", "")
     LIVEKIT_API_SECRET: str = os.getenv("LIVEKIT_API_SECRET", "")
-    
+
     # Anam Avatar Settings
     ANAM_API_KEY: str = os.getenv("ANAM_API_KEY", "")
     ANAM_AVATAR_ID: str = os.getenv("ANAM_AVATAR_ID", "")
-    
+
+    SIMLI_API_KEY: str = os.getenv("SIMLI_API_KEY", "")
+    SIMLI_FACE_ID: str = os.getenv("SIMLI_FACE_ID", "")
+
     # Gemini LLM Settings
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
@@ -38,7 +43,10 @@ class Config:
         """
         missing = [k for k, v in self.__dict__.items() if not v]
         if missing:
-            raise ValueError(f"❌ Missing mandatory environment variables: {', '.join(missing)}")
+            raise ValueError(
+                f"❌ Missing mandatory environment variables: {', '.join(missing)}"
+            )
+
 
 # 1. Create the configuration instance
 _config = Config()
@@ -53,6 +61,9 @@ LIVEKIT_API_SECRET = _config.LIVEKIT_API_SECRET
 
 ANAM_API_KEY = _config.ANAM_API_KEY
 ANAM_AVATAR_ID = _config.ANAM_AVATAR_ID
+
+SIMLI_API_KEY = _config.SIMLI_API_KEY
+SIMLI_FACE_ID = _config.SIMLI_FACE_ID
 
 GEMINI_API_KEY = _config.GEMINI_API_KEY
 
