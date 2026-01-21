@@ -2,6 +2,7 @@ import os
 import uuid
 import shutil
 import logging
+import json
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from livekit import api
 
@@ -19,7 +20,7 @@ logger = logging.getLogger("api-routes-dia")
 router = APIRouter()
 
 
-@router.post("/upload-ppt")
+@router.post("/upload-ppt/")
 async def upload_ppt(file: UploadFile = File(...)):
     """
     Step 1: Upload and Process PPT.
@@ -41,6 +42,14 @@ async def upload_ppt(file: UploadFile = File(...)):
 
         image_files = convert_ppt_to_images(ppt_path, work_dir)
         slides_text = extract_text_slidewise(ppt_path)
+
+        # Write slides_text to a JSON file for debugging/inspection
+        # print("Start slides context file creation")
+        # slides_text_path = os.path.join(".", "slides_text.json")
+        # print("slides text path: ", slides_text_path)
+        # with open(slides_text_path, "w") as f:
+        #     json.dump(slides_text, f, indent=4)
+        # print("Finished slides context file creation")
 
         # Save Parent Presentation
         supabase.table("presentations").insert(
@@ -90,7 +99,7 @@ async def upload_ppt(file: UploadFile = File(...)):
             shutil.rmtree(work_dir, ignore_errors=True)
 
 
-@router.get("/get-presentation")
+@router.get("/get-presentation/")
 async def get_presentation(presentation_id: str):
     try:
         response = (
@@ -105,7 +114,7 @@ async def get_presentation(presentation_id: str):
         raise Exception("Error fetching presentation slides from supabase: ", e)
 
 
-@router.get("/livekit/token")
+@router.get("/livekit/token/")
 async def get_token(presentation_id: str, identity: str):
     """
     Step 2: Generate Token and start Avatar session.
